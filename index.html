@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Concrete Calculator BD</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <h1 id="appTitle">Concrete Calculator BD</h1>
+    <p id="appTagline" class="tagline">Estimate cement, sand and aggregate for your construction work.</p>
+  </div>
+  <button id="langBtn" type="button">&#2476;&#2494;&#2434;&#2482;&#2494;</button>
+</header>
+
+<main>
+  <section class="card" aria-labelledby="calcHeading">
+    <h2 id="calcHeading">Element Calculator</h2>
+    <div class="grid">
+      <label><span id="lblElType">Element type</span>
+        <select id="elType">
+          <option value="slab">Slab</option>
+          <option value="rectCol">Rectangular Column</option>
+          <option value="circCol">Circular Column</option>
+          <option value="beam">Beam</option>
+          <option value="footing">Footing</option>
+        </select>
+      </label>
+      <label><span id="lblUnit">Unit</span>
+        <select id="unitSel">
+          <option value="ft">Feet (ft)</option>
+          <option value="m">Metres (m)</option>
+        </select>
+      </label>
+      <label><span id="dim1Label">Length</span>
+        <input id="d1" type="number" min="0" step="any" placeholder="e.g. 10">
+      </label>
+      <label><span id="dim2Label">Width</span>
+        <input id="d2" type="number" min="0" step="any" placeholder="e.g. 12">
+      </label>
+      <label id="dim3Wrap"><span id="dim3Label">Thickness</span>
+        <input id="d3" type="number" min="0" step="any" placeholder="e.g. 0.5">
+      </label>
+      <label><span id="lblQty">Quantity (nos.)</span>
+        <input id="qty" type="number" min="1" step="1" value="1">
+      </label>
+      <label><span id="lblMix">Mix ratio</span>
+        <select id="mixSel">
+          <option value="M10">M10 (1 : 3 : 6)</option>
+          <option value="M15" selected>M15 (1 : 2 : 4)</option>
+          <option value="M20">M20 (1 : 1.5 : 3)</option>
+          <option value="M25">M25 (1 : 1 : 2)</option>
+          <option value="custom">Custom</option>
+        </select>
+      </label>
+      <span id="customRatioWrap" class="hidden">
+        <label><span id="lblRC">Cement parts</span>
+          <input id="rC" type="number" min="0.1" step="any" value="1"></label>
+        <label><span id="lblRS">Sand parts</span>
+          <input id="rS" type="number" min="0.1" step="any" value="2"></label>
+        <label><span id="lblRA">Aggregate parts</span>
+          <input id="rA" type="number" min="0.1" step="any" value="4"></label>
+      </span>
+      <label><span id="lblWastage">Wastage (%)</span>
+        <input id="wastage" type="number" min="0" max="50" step="any" value="5">
+      </label>
+    </div>
+
+    <h3 id="priceHeading">Unit prices (optional, BDT)</h3>
+    <div class="grid">
+      <label><span id="lblPriceBag">Per cement bag (50 kg)</span>
+        <input id="priceBag" type="number" min="0" step="any" placeholder="e.g. 550"></label>
+      <label><span id="lblPriceSand">Per cft sand</span>
+        <input id="priceSand" type="number" min="0" step="any" placeholder="e.g. 60"></label>
+      <label><span id="lblPriceAgg">Per cft aggregate</span>
+        <input id="priceAgg" type="number" min="0" step="any" placeholder="e.g. 55"></label>
+    </div>
+
+    <p id="formError" class="error hidden" role="alert"></p>
+    <div class="actions">
+      <button id="calcBtn" type="button">Calculate</button>
+      <button id="addBtn" type="button" disabled>Add to project</button>
+    </div>
+
+    <div id="resultBox" class="result hidden" aria-live="polite"></div>
+  </section>
+
+  <section class="card" aria-labelledby="projectHeading">
+    <h2 id="projectHeading">Project</h2>
+    <p id="projectEmpty" class="muted">No elements yet. Calculate one and add it to the project.</p>
+    <div class="tablewrap">
+      <table id="projectTable" class="hidden">
+        <thead><tr>
+          <th id="thEl">Element</th><th id="thVol">Volume</th><th id="thBags">Cement bags</th>
+          <th id="thSand">Sand</th><th id="thAgg">Aggregate</th><th id="thCost">Cost</th><th></th>
+        </tr></thead>
+        <tbody id="projectBody"></tbody>
+        <tfoot><tr id="totalsRow"></tr></tfoot>
+      </table>
+    </div>
+    <div class="actions">
+      <button id="exportBtn" type="button">Export JSON</button>
+      <label class="filebtn"><span id="importLabel">Import JSON</span>
+        <input id="importFile" type="file" accept="application/json,.json"></label>
+    </div>
+    <p id="dataMsg" class="muted" role="status"></p>
+    <div class="danger">
+      <label><span id="lblClear">Type DELETE to erase all project data</span>
+        <input id="clearInput" type="text" placeholder="DELETE"></label>
+      <button id="clearBtn" type="button" disabled>Erase all</button>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="methodHeading">
+    <h2 id="methodHeading">Method &amp; assumptions</h2>
+    <ul id="methodList">
+      <li>Wet concrete volume is converted to dry volume with the standard factor 1.54.</li>
+      <li>Cement density 1,440 kg/m&#179;, one bag = 50 kg. Sand and aggregate are shown in m&#179; and ft&#179;.</li>
+      <li>Cement is rounded UP to whole bags for purchase; cost uses whole bags and the displayed (2-decimal) sand/aggregate ft&#179;.</li>
+      <li>Mix ratios are nominal mixes (M10 1:3:6, M15 1:2:4, M20 1:1.5:3, M25 1:1:2). Confirm the mix with your structural engineer.</li>
+      <li>Prices are your own inputs, not market rates. This tool estimates quantities only; it is not a structural design.</li>
+    </ul>
+  </section>
+</main>
+
+<footer>
+  <p id="footerNote">Offline tool. Your data stays in this browser (localStorage). No account, no network requests.</p>
+</footer>
+
+<script src="js/logic.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
